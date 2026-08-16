@@ -2,7 +2,7 @@
 
 bring-your-own-data: **수집물은 repo에 들어가지 않는다**(.gitignore).
 이용자가 자기 키로 직접 받는다. 공공기관 저작물 재배포 문제를 그렇게 피한다
-(『돈공부』 library/권리대장.md §1 — 저작권법 제24조의2 ①의 자유이용 대상은
+(저작권법 제24조의2 ①의 자유이용 대상은
 국가·지자체 한정이고 공공기관은 아니다).
 
 키 없이도 동작한다 — ECOS는 시험키 `sample`로 **10건까지** 준다.
@@ -85,7 +85,7 @@ def conversion_rate_cap(base_rate: float, kind: str = "주택") -> float:
     """⭐ 전월세 전환율 법정 상한. 단위는 % (기준금리 2.75 → 2.75).
 
     데이터 레이어와 법령 레이어가 만나는 유일한 자리다.
-    **법도 시행령도 안 고치고 금융통화위원회가 값을 움직인다**(『돈공부』 3.C.7).
+    **법도 시행령도 안 고치고 금융통화위원회가 값을 움직인다.**
 
     ⚠⚠ 조문은 두 호 **중 낮은 비율**이라고 못 박는다 — 상한이 둘이고 작은 쪽이 이긴다.
     기준금리만 보고 계산하면 금리가 높을 때 법정 상한을 넘긴 값을 낸다.
@@ -95,7 +95,7 @@ def conversion_rate_cap(base_rate: float, kind: str = "주택") -> float:
     기준금리 2.75%면 주택 4.75% · 상가 12.0%로 **7.25%p 벌어진다.**
     유형을 안 가리고 하나만 쓰면 상가에서 크게 틀린다.
 
-    근거: 위 `CONVERSION_CAP` (세제대장 T-임대-05)
+    근거: 위 `CONVERSION_CAP` · policy/constants.yaml T-임대-05·T-임대-05-상가
     """
     if kind not in CONVERSION_CAP:
         raise ValueError(f"kind는 {list(CONVERSION_CAP)} 중 하나여야 한다 — 받은 값: {kind!r}")

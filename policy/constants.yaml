@@ -1,13 +1,13 @@
 # constants.yaml — 부동산 제도 값
 #
-# 원본: 『돈공부』 notes/세제대장.md 중 부동산 관련 33건
+# 근거: 국가법령정보센터 조문 원문(각 항목 basis 참조)
 # 규약: policy/schema.md   갱신: ../MAINTENANCE.md
 #
 # ⚠ value: null 은 "기계가 단일값으로 쓸 수 없다"는 뜻이다. 억지로 숫자를 뽑지 않았다.
 # ⚠ effective_from: null 은 "시행일을 확인하지 못했다"는 뜻이다. 추측해 채우지 않았다.
 
 meta:
-  source: "돈공부/notes/세제대장.md"
+  source: "국가법령정보센터 — 조문 원문 직접 확인"
   extracted_at: 2026-08-16
   count: 33
 
@@ -21,7 +21,6 @@ constants:
     checked_at: 2026-08-15
     expires_at: 2027-02-13
     status: 시행일확인
-    section: "3.C.2"
     value: null
 
   - id: T-취득-02
@@ -33,7 +32,6 @@ constants:
     checked_at: 2026-08-15
     expires_at: 2027-08-15
     status: 시행일확인
-    section: "3.C.2"
     value: null
 
   - id: T-취득-03
@@ -45,7 +43,6 @@ constants:
     checked_at: 2026-08-15
     expires_at: 2027-08-15
     status: 시행일확인
-    section: "3.C.2"
     value: null
 
   - id: T-취득-04
@@ -57,7 +54,6 @@ constants:
     checked_at: 2026-08-15
     expires_at: 2027-08-15
     status: 확인완료
-    section: "5.5"
     value: null
 
   - id: T-취득-06
@@ -81,7 +77,6 @@ constants:
     checked_at: 2026-08-16          # korean-law로 지방세법·주택법·동 시행령 원문 직접 확인
     expires_at: 2027-08-15
     status: 시행일확인
-    section: "3.A.3"
     value: null
 
   - id: T-취득-05
@@ -93,7 +88,6 @@ constants:
     checked_at: 2026-08-15
     expires_at: 2027-08-15
     status: 시행일확인
-    section: "5.5"
     value: null
 
   - id: T-보유-01
@@ -105,7 +99,6 @@ constants:
     checked_at: 2026-08-15
     expires_at: 2027-08-15
     status: 시행일확인
-    section: "5.5"
     value: null
 
   - id: T-보유-02
@@ -117,7 +110,6 @@ constants:
     checked_at: 2026-08-15
     expires_at: 2027-08-15
     status: 시행일확인
-    section: "5.5"
     value: null
 
   - id: T-보유-03
@@ -129,7 +121,6 @@ constants:
     checked_at: 2026-08-15
     expires_at: 2027-08-15
     status: 시행일확인
-    section: "5.5"
     value: null
 
   - id: T-보유-04
@@ -141,7 +132,6 @@ constants:
     checked_at: 2026-08-15
     expires_at: 2027-02-13
     status: 시행일확인
-    section: "5.5"
     value: null
 
   - id: T-보유-05
@@ -153,7 +143,6 @@ constants:
     checked_at: 2026-08-15
     expires_at: 2027-08-15
     status: 시행일확인
-    section: "3.C.3"
     value: null
 
   - id: T-보유-06
@@ -165,19 +154,17 @@ constants:
     checked_at: 2026-08-15
     expires_at: 2027-02-13
     status: 시행일확인
-    section: "3.C.3"
     value: null
 
   - id: T-양도-01
     name: "다주택 양도세 중과"
     layer: L1   # 걸친 층: L1 → L2
-    rule: "법률은 중과를 두고 시행령이 한시 배제한다. ⚠⚠ 배제 2026. 5. 9. 종료 — 이 책의 중심 판정"
+    rule: "법률은 중과를 두고 시행령이 한시 배제한다. ⚠⚠ 배제 2026. 5. 9. 종료 — 이 repo에서 가장 빨리 낡을 항목 하나"
     basis: "소득세법 제104조 ⑦ + 시행령"
     effective_from: null
     checked_at: 2026-08-15
     expires_at: 2027-08-15
     status: 개정예정
-    section: "3.C.4 · 3.C.3"
     value: null
 
   - id: T-양도-02
@@ -189,7 +176,6 @@ constants:
     checked_at: 2026-08-15
     expires_at: 2027-08-15
     status: 시행일확인
-    section: "3.C.4"
     value: null
 
   - id: T-양도-03
@@ -201,7 +187,6 @@ constants:
     checked_at: 2026-08-15
     expires_at: 2027-02-13
     status: 시행일확인
-    section: "3.C.6"
     value: null
 
   - id: T-양도-04
@@ -213,7 +198,6 @@ constants:
     checked_at: 2026-08-15
     expires_at: 2027-08-15
     status: 시행일확인
-    section: "5.5"
     value: null
 
   - id: T-양도-05
@@ -225,7 +209,6 @@ constants:
     checked_at: 2026-08-15
     expires_at: 2027-08-15
     status: 시행일확인
-    section: "5.5"
     value: null
 
   - id: T-대출-01
@@ -237,7 +220,6 @@ constants:
     checked_at: 2026-08-15
     expires_at: 2027-08-15
     status: 시행일확인
-    section: "3.C.5"
     value: null
 
   - id: T-대출-02
@@ -249,7 +231,6 @@ constants:
     checked_at: 2026-08-15
     expires_at: 2026-09-14
     status: 개정예정
-    section: "3.C.5"
     value: null
 
   - id: T-지역-01
@@ -261,7 +242,6 @@ constants:
     checked_at: 2026-08-15
     expires_at: 2027-08-15
     status: 시행일확인
-    section: "3.C.1"
     value: null
 
   - id: T-지역-02
@@ -273,7 +253,6 @@ constants:
     checked_at: 2026-08-15
     expires_at: 2027-08-15
     status: 시행일확인
-    section: "3.C.1"
     value: null
 
   - id: T-지역-03
@@ -285,7 +264,6 @@ constants:
     checked_at: 2026-08-15
     expires_at: 2027-08-15
     status: 시행일확인
-    section: "3.C.1"
     value: null
 
   - id: T-임대-01
@@ -297,7 +275,6 @@ constants:
     checked_at: 2026-08-15
     expires_at: 2027-08-15
     status: 확인완료
-    section: "3.C.7"
     value: null
 
   - id: T-임대-02
@@ -309,7 +286,6 @@ constants:
     checked_at: 2026-08-15
     expires_at: 2027-08-15
     status: 확인완료
-    section: "3.C.7"
     value: null
 
   - id: T-임대-03
@@ -321,7 +297,6 @@ constants:
     checked_at: 2026-08-15
     expires_at: 2027-02-13
     status: 시행일확인
-    section: "3.C.7"
     value: null
 
   - id: T-임대-04
@@ -333,7 +308,6 @@ constants:
     checked_at: 2026-08-15
     expires_at: 2027-08-15
     status: 확인완료
-    section: "3.C.7"
     value: null
 
   - id: T-임대-05
@@ -348,7 +322,6 @@ constants:
     checked_at: 2026-08-16          # korean-law로 조문 원문 직접 확인
     expires_at: 2027-02-13
     status: 개정예정
-    section: "3.C.7"
     value: null
 
   - id: T-임대-05-상가
@@ -363,7 +336,6 @@ constants:
     checked_at: 2026-08-16          # korean-law로 시행령 원문 직접 확인 (시행 2026. 7. 1.)
     expires_at: 2027-02-13
     status: 확인완료
-    section: "3.C.7"
     value: null
 
   - id: T-임대-06
@@ -375,7 +347,6 @@ constants:
     checked_at: 2026-08-15
     expires_at: 2027-08-15
     status: 시행일확인
-    section: "3.C.7"
     value: null
 
   - id: T-임대-07
@@ -387,7 +358,6 @@ constants:
     checked_at: 2026-08-15
     expires_at: 2027-08-15
     status: 시행일확인
-    section: "3.C.7"
     value: null
 
   - id: T-임대-08
@@ -399,7 +369,6 @@ constants:
     checked_at: 2026-08-15
     expires_at: 2027-02-13
     status: 시행일확인
-    section: "3.C.7"
     value: null
 
   - id: T-임대-09
@@ -411,7 +380,6 @@ constants:
     checked_at: 2026-08-15
     expires_at: 2027-08-15
     status: 시행일확인
-    section: "3.C.7"
     value: null
 
   - id: T-임대-10
@@ -423,5 +391,4 @@ constants:
     checked_at: 2026-08-15
     expires_at: 2027-08-15
     status: 시행일확인
-    section: "3.C.7"
     value: null

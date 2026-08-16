@@ -60,7 +60,7 @@ def test_수집물이_있으면_기본값이_된다() -> None:
 def test_전월세_전환율_상한이_유도된다() -> None:
     """⭐ 데이터 레이어와 법령 레이어가 만나는 자리.
 
-    법도 시행령도 안 고치고 금융통화위원회가 값을 움직인다(3.C.7).
+    법도 시행령도 안 고치고 금융통화위원회가 값을 움직인다.
     """
     from data.collect_ecos import conversion_rate_cap
     assert conversion_rate_cap(2.75) == 4.75

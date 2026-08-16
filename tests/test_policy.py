@@ -92,7 +92,7 @@ def test_규정값과_실제값이_다르면_반드시_알린다() -> None:
 
 
 def test_시행일_미확인은_소급계산_금지를_알린다() -> None:
-    """원장 101건 중 68건이 이 상태다. 숨기지 않는다."""
+    """3분의 2쯤이 이 상태다 — 현재값은 맞으나 소급 계산에 못 쓴다. 숨기지 않는다."""
     consts = load(POLICY / "constants.yaml")
     unknown = [c for c in consts if c.status == "시행일확인"]
     assert unknown, "시행일 미확인 항목이 있어야 한다"
@@ -205,10 +205,10 @@ def test_문서에_적힌_건수가_실제와_맞는다() -> None:
 
     checks = [
         (root / "README.md", r"\*\*(\d+)건, 층·확인일 포함\*\*", total, "README 제도 값"),
-        (POLICY / "schema.md", r"세제대장에서 옮긴 (\d+)건", per_file["constants.yaml"],
+        (POLICY / "schema.md", r"(\d+)건 중 다수는", per_file["constants.yaml"],
          "schema.md constants 건수"),
-        (POLICY / "constants.yaml", r"부동산 관련 (\d+)건", per_file["constants.yaml"],
-         "constants.yaml 머리글"),
+        (POLICY / "constants.yaml", r"count: (\d+)", per_file["constants.yaml"],
+         "constants.yaml meta.count"),
     ]
     for path, pattern, expect, label in checks:
         m = re.search(pattern, path.read_text(encoding="utf-8"))

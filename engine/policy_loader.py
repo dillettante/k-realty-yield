@@ -41,7 +41,6 @@ class Constant:
     checked_at: dt.date
     status: str
     rule: str = ""
-    section: str = ""
     value: float | None = None
     effective_from: dt.date | None = None
     expires_at: dt.date | None = None

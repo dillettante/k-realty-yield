@@ -6,7 +6,7 @@ Phase 3의 완료 기준이 이 모듈이다.
   · **값이 어디서 왔는지가 항상 따라다닌다**(`MarketValue.source`).
 
 ⚠⚠ 이 모듈은 「그럴듯한 기본값」을 지어내지 않는다.
-수집물이 없으면 없다고 말한다. 『돈공부』가 반복해 확인한 것이 그것이다 —
+수집물이 없으면 없다고 말한다 —
 **없다와 못 찾았다는 다르고, 둘 다 0이 아니다.**
 """
 
@@ -226,7 +226,7 @@ def _load_reb(cache_dir: Path, m: Market, property_type: str = "") -> None:
             source=f"한국부동산원 임대동향조사({prop_type})",
             collected_at=dt.date.fromisoformat(got),
             note=("분기 소득수익률 · ⚠⚠ **어느 비용까지 뺀 값인지 조사 개요를 확인해야 한다** "
-                  "(『돈공부』 3.A.3 §판정 6의 미해결 항목)"),
+                  "(조사 개요 미확인 — 이 repo의 미해결 항목)"),
         )
     if hit := pick("noi"):
         m.warnings.append(
@@ -242,7 +242,7 @@ def _load_reb(cache_dir: Path, m: Market, property_type: str = "") -> None:
 def funding_rate_default(m: Market) -> tuple[float | None, str]:
     """조달비용 r의 기본값. **없으면 None을 돌려주고 사용자에게 되묻는다.**
 
-    ⚠ 이 값을 단독으로 쓰지 말 것 — 『돈공부』 3.A.3 §판정 4가 보인 대로
+    ⚠ 이 값을 단독으로 쓰지 말 것 — leverage.py의 민감도표가 보이듯
     금리 3.5%p 차이가 자기자본수익률을 28%p 움직인다. `leverage.rate_sensitivity`로
     **구간을 함께** 보여야 한다(DISCLAIMER §1-3).
     """
