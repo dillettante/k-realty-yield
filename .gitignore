@@ -1,0 +1,21 @@
+# ⚠ 수집물은 repo에 들어가지 않는다 (bring-your-own-data)
+#
+# 이유는 편의가 아니라 법적 요건이다 — 공공기관 저작물은 저작권법
+# 제24조의2 제1항의 자유이용 대상이 아니다(자유이용은 국가·지자체 한정).
+# 수집 코드만 배포하면 이용자가 자기 손으로 받는 것이 된다.
+# DISCLAIMER.md §5 참조.
+
+cache/
+*.csv
+*.xlsx
+
+__pycache__/
+*.pyc
+.venv/
+.DS_Store
+
+# ⚠⚠ API 키 — 절대 커밋하지 않는다
+.env
+.env.*
+*.key
+secrets*

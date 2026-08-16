@@ -1,0 +1,81 @@
+# ltv.yaml — L4(행정지도) 값
+#
+# ⚠⚠ 이 파일이 이 repo에서 가장 빨리 낡는다. 만료 30일.
+# ⚠⚠ 이 파일의 값은 API로 받을 수 없다. 사람이 금융위 보도자료를 읽고 손으로 적는다.
+#
+# 규약: policy/schema.md · 갱신 절차: ../MAINTENANCE.md §2-1
+#
+# 왜 규정값과 실제값을 함께 적나 —
+#   은행업감독규정 별표6 제2호 가목은 지금도 70%(규제지역 50%)이고,
+#   실제 적용값은 행정지도로 정해진다. 별표6은 그 뒤 두 차례 개정되면서도
+#   이 숫자를 손대지 않았다. 조문을 정확히 찾은 사람이 10%p 틀린 값을
+#   확신과 함께 얻는다(『돈공부』 3.C.5).
+
+meta:
+  source: "돈공부/notes/세제대장.md T-대출-01·02"
+  extracted_at: 2026-08-16
+  warning: "L4는 예고 없이 바뀐다. 만료일을 넘기면 반드시 출처에서 재확인할 것."
+
+items:
+  - id: T-대출-02-규제지역
+    name: "LTV 실제 적용값 (규제지역·주택담보대출)"
+    layer: L4
+    regulation_value: 0.50          # 은행업감독규정 별표6 제2호 가목
+    effective_value: 0.40           # 행정지도 (2025. 10. 16.~)
+    basis: "은행업감독규정 별표6 제2호 가목 + 금융위원회 행정지도"
+    source: "금융위원회 보도자료 (2025-10-16)"
+    source_url: null                # ⚠ 갱신 시 URL을 반드시 채운다
+    effective_from: 2025-10-16
+    checked_at: 2026-08-15
+    expires_at: 2026-09-15          # 30일
+    status: 개정예정
+    section: "3.C.5"
+    note: "규정값과 실제값이 10%p 다르다. 조문만 보면 틀린다."
+
+  - id: T-대출-02-비규제지역
+    name: "LTV 실제 적용값 (비규제지역·주택담보대출)"
+    layer: L4
+    regulation_value: 0.70
+    effective_value: null           # ⚠ 확인하지 못했다 — 추측하지 않는다
+    basis: "은행업감독규정 별표6 제2호 가목 + 금융위원회 행정지도"
+    source: null
+    source_url: null
+    effective_from: null
+    checked_at: 2026-08-15
+    expires_at: 2026-09-15
+    status: 확인필요
+    section: "3.C.5"
+    note: "규정값만 확인됐다. 실제 적용값은 사용자가 은행에 확인해야 한다."
+
+  - id: T-대출-01
+    name: "LTV·DTI·DSR의 근거 사슬"
+    layer: L1                        # 걸친 층: L1 → L2 → L3 → L4
+    regulation_value: null
+    effective_value: null
+    basis: "은행법 제34조 · 시행령 제20조 · 은행업감독규정 제29조의2"
+    source: "국가법령정보센터"
+    source_url: null
+    effective_from: null
+    checked_at: 2026-08-15
+    expires_at: 2027-08-15
+    status: 시행일확인
+    section: "3.C.5"
+    note: >
+      법률·시행령에 비율이 없다. 은행법 제34조와 시행령 제20조는 이름조차 적지 않고,
+      감독규정이 이름과 위임만 둔다. 실제 값은 L4에서 정해진다 —
+      네 층을 다 내려가야 숫자가 나온다.
+
+  - id: DSR-실제적용
+    name: "DSR 실제 적용값"
+    layer: L4
+    regulation_value: null
+    effective_value: null           # ⚠ 미확인
+    basis: "은행업감독규정 + 금융위원회 행정지도"
+    source: null
+    source_url: null
+    effective_from: null
+    checked_at: 2026-08-15
+    expires_at: 2026-09-15
+    status: 확인필요
+    section: "3.C.5"
+    note: "스트레스 DSR 가산금리 포함 여부·차주 단위 적용 범위 미확인. 사용자 입력 필수."
