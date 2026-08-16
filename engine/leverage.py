@@ -41,19 +41,38 @@ def roe(roa: float, multiple: float, funding_rate: float) -> float:
     """항등식 그대로. 자산군을 타지 않는다(1.7).
 
     전세가율 90% 아파트와 1920년대 증거금 10% 주식이 이 한 줄에 함께 놓인다.
+
+    ⚠⚠ `funding_rate`는 **가중 조달비용**이지 대출금리가 아니다.
+    무이자 보증금이 섞였는데 대출금리를 그대로 넣으면 답이 틀린다 —
+    책 §판정 4의 사례(자산 1억·보증금 1천만·대출 8천만@3.5%)에서
+    대출금리를 넣으면 8.5%, `weighted_funding_rate()`를 거치면 12.0%다.
+    보증금이 없을 때만 두 값이 같다.
     """
     return roa + (multiple - 1) * (roa - funding_rate)
 
 
-def sign_flip_point(roa: float) -> float:
-    """부호 전환점 — 자산수익률 = 조달비용인 지점.
+def sign_flip_point(roa: float, loan: float = 0.0, free_debt: float = 0.0) -> float:
+    """부호 전환점 — 가중 조달비용 = 자산수익률인 지점.
 
     여기서는 배율이 몇이든 ROE = ROA다. 레버리지가 아무것도 하지 않는다.
 
     ⚠⚠ 손익분기 금리와 다르고 **이보다 먼저 온다**(1.7 §판정 3).
     그 사이 구간에서 투자자는 **돈을 벌면서 레버리지 때문에 손해를 본다.**
+
+    ⚠⚠ **축을 조심한다.** 인자를 안 주면 **가중 조달비용** 축의 답이 나온다.
+    그런데 `rate_sensitivity()`의 표는 **대출금리** 축이라, 무이자 보증금이
+    섞이면 두 축이 어긋난다. 표와 나란히 놓을 값이 필요하면
+    `loan`·`free_debt`를 넘겨 대출금리 축으로 환산한다.
+
+        무이자 보증금은 가중평균을 끌어내리므로, 대출금리는 그만큼 더
+        올라가야 가중 조달비용이 자산수익률에 닿는다.
+
+    책 §판정 4(자산 1억·보증금 1천만·대출 8천만·ROA 4%)에서
+    가중 조달비용 축은 4.0%, 대출금리 축은 **4.5%**이고 손익분기는 5.0%다.
     """
-    return roa
+    if loan <= 0:
+        return roa
+    return roa * (loan + free_debt) / loan
 
 
 def wipeout_drop(asset: float, equity: float) -> float:

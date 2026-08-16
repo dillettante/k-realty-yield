@@ -22,7 +22,10 @@ from pathlib import Path
 
 POLICY_DIR = Path(__file__).resolve().parent.parent / "policy"
 
-REQUIRED = ("id", "name", "layer", "basis", "checked_at", "status")
+# ⚠⚠ expires_at이 여기 있어야 하는 이유 —
+#    없으면 age_state()가 그 값을 **영원히 「fresh」로 본다.**
+#    「값의 나이를 준다」는 이 repo의 주장이 통째로 선택 사항이 된다.
+REQUIRED = ("id", "name", "layer", "basis", "checked_at", "expires_at", "status")
 GRACE_DAYS = 30          # 만료 후 이 기간까지는 경고만, 넘으면 강조
 NO_VALUE_LAYERS = ("L5", "L6")
 
@@ -52,7 +55,9 @@ class Constant:
         """`fresh` / `stale` / `expired` 중 하나."""
         today = today or dt.date.today()
         if self.expires_at is None:
-            return "fresh"
+            # 로더가 막지만, 직접 만든 Constant는 여기로 온다.
+            # ⚠ 「모르면 신선하다」가 아니라 「모르면 만료」다 — 조용히 통과시키지 않는다.
+            return "expired"
         if today <= self.expires_at:
             return "fresh"
         if (today - self.expires_at).days <= GRACE_DAYS:
@@ -160,19 +165,36 @@ def load(path: Path | str) -> list[Constant]:
         missing = [k for k in REQUIRED if d.get(k) in (None, "")]
         if missing:
             raise ValueError(f"{path.name} · {d.get('id', '?')}: 필수 필드 없음 {missing}")
-        if d["layer"] in NO_VALUE_LAYERS and d.get("value") is not None:
-            raise ValueError(f"{path.name} · {d['id']}: {d['layer']}에 값을 실을 수 없다")
+        # L5·L6은 어느 이름으로도 값을 싣지 않는다(value만 막으면 뒷문이 남는다)
+        laid = [k for k in ("value", "regulation_value", "effective_value")
+                if d.get(k) is not None]
+        if d["layer"] in NO_VALUE_LAYERS and laid:
+            raise ValueError(
+                f"{path.name} · {d['id']}: {d['layer']}에 값을 실을 수 없다 (실린 것: {laid})"
+            )
         out.append(Constant(**{k: v for k, v in d.items()
                                if k in Constant.__dataclass_fields__}))
     return out
 
 
 def load_all(policy_dir: Path | str = POLICY_DIR) -> list[Constant]:
-    """policy/의 모든 yaml을 읽는다."""
+    """policy/의 모든 yaml을 읽는다.
+
+    ⚠ 파일이 갈려 있으므로 **같은 id가 두 파일에 들어가기 쉽다.** 그러면
+    같은 사실이 두 번 세어지고 만료일이 따로 낡는다 — 여기서 막는다.
+    """
     d = Path(policy_dir)
     out: list[Constant] = []
+    seen: dict[str, str] = {}
     for f in sorted(d.glob("*.yaml")):
-        out.extend(load(f))
+        for c in load(f):
+            if c.id in seen:
+                raise ValueError(
+                    f"id 중복: {c.id} — {seen[c.id]}와 {f.name}에 모두 있다. "
+                    "한 사실은 한 파일에만 둔다."
+                )
+            seen[c.id] = f.name
+            out.append(c)
     return out
 
 

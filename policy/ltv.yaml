@@ -47,23 +47,9 @@ items:
     section: "3.C.5"
     note: "규정값만 확인됐다. 실제 적용값은 사용자가 은행에 확인해야 한다."
 
-  - id: T-대출-01
-    name: "LTV·DTI·DSR의 근거 사슬"
-    layer: L1                        # 걸친 층: L1 → L2 → L3 → L4
-    regulation_value: null
-    effective_value: null
-    basis: "은행법 제34조 · 시행령 제20조 · 은행업감독규정 제29조의2"
-    source: "국가법령정보센터"
-    source_url: null
-    effective_from: null
-    checked_at: 2026-08-15
-    expires_at: 2027-08-15
-    status: 시행일확인
-    section: "3.C.5"
-    note: >
-      법률·시행령에 비율이 없다. 은행법 제34조와 시행령 제20조는 이름조차 적지 않고,
-      감독규정이 이름과 위임만 둔다. 실제 값은 L4에서 정해진다 —
-      네 층을 다 내려가야 숫자가 나온다.
+  # ⚠ T-대출-01(근거 사슬)은 여기 두지 않는다 — constants.yaml에 있다.
+  #   같은 id를 두 파일에 두면 로더가 같은 사실을 두 번 세고, 만료일이
+  #   따로 낡는다(실제로 T-대출-02의 만료일이 하루 어긋나 있었다).
 
   - id: DSR-실제적용
     name: "DSR 실제 적용값"

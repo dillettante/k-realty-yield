@@ -71,14 +71,37 @@ def fetch(series: str, start: str, end: str) -> list[dict]:
     ]
 
 
-def conversion_rate_cap(base_rate: float) -> float:
-    """⭐ 전월세 전환율 법정 상한 = 기준금리 + 2%p.
+# 전월세 전환율 상한 — (상한 비율, 기준금리에 적용할 값, 연산, 근거)
+# ⚠⚠ 주택과 상가가 **식 자체가 다르다.** 주택은 기준금리에 더하고 상가는 곱한다.
+CONVERSION_CAP = {
+    "주택": (10.0, 2.0, "add",
+             "주택임대차보호법 제7조의2 · 시행령 제9조(연 1할 / 기준금리 + 2%p)"),
+    "상가": (12.0, 4.5, "mul",
+             "상가건물 임대차보호법 제12조 · 시행령 제5조(연 1할2푼 / 기준금리 × 4.5배)"),
+}
+
+
+def conversion_rate_cap(base_rate: float, kind: str = "주택") -> float:
+    """⭐ 전월세 전환율 법정 상한. 단위는 % (기준금리 2.75 → 2.75).
 
     데이터 레이어와 법령 레이어가 만나는 유일한 자리다.
     **법도 시행령도 안 고치고 금융통화위원회가 값을 움직인다**(『돈공부』 3.C.7).
-    근거: 주택임대차보호법 제7조의2 · 시행령 제9조 (세제대장 T-임대-05)
+
+    ⚠⚠ 조문은 두 호 **중 낮은 비율**이라고 못 박는다 — 상한이 둘이고 작은 쪽이 이긴다.
+    기준금리만 보고 계산하면 금리가 높을 때 법정 상한을 넘긴 값을 낸다.
+    (주택은 기준금리 8% 초과, 상가는 2.667% 초과 구간에서 갈린다.)
+
+    ⚠⚠ 그리고 **주택과 상가는 식이 다르다.** 상가는 더하기가 아니라 **곱하기**다.
+    기준금리 2.75%면 주택 4.75% · 상가 12.0%로 **7.25%p 벌어진다.**
+    유형을 안 가리고 하나만 쓰면 상가에서 크게 틀린다.
+
+    근거: 위 `CONVERSION_CAP` (세제대장 T-임대-05)
     """
-    return base_rate + 2.0
+    if kind not in CONVERSION_CAP:
+        raise ValueError(f"kind는 {list(CONVERSION_CAP)} 중 하나여야 한다 — 받은 값: {kind!r}")
+    ceiling, factor, op, _ = CONVERSION_CAP[kind]
+    linked = base_rate + factor if op == "add" else base_rate * factor
+    return min(ceiling, linked)
 
 
 def collect(months: int = 10) -> dict:
@@ -109,15 +132,22 @@ def collect(months: int = 10) -> dict:
 
     base = snap["series"].get("base_rate", {}).get("latest")
     if base:
-        snap["derived"]["jeonse_conversion_cap"] = {
-            "value": conversion_rate_cap(base["value"]),
-            "basis": "주택임대차보호법 제7조의2 · 시행령 제9조",
-            "layer": "L2+외부지표",
-            "note": f"기준금리 {base['value']}%({base['time']}) + 2%p",
-        }
+        # 주택·상가를 함께 낸다 — 식이 달라서 하나만 내면 다른 쪽이 크게 틀린다
+        for kind, (ceiling, factor, op, basis) in CONVERSION_CAP.items():
+            linked = base["value"] + factor if op == "add" else base["value"] * factor
+            snap["derived"][f"conversion_cap_{kind}"] = {
+                "value": conversion_rate_cap(base["value"], kind),
+                "basis": basis,
+                "layer": "L2+외부지표",
+                "binding": "상한" if ceiling <= linked else "기준금리 연동분",
+                "note": (f"기준금리 {base['value']}%({base['time']}) 연동분 {linked:.2f}% "
+                         f"vs 상한 {ceiling}% → 낮은 쪽"),
+            }
     if key == "sample":
         snap["warnings"].append(
-            "시험키로 받았습니다 — 10건 제한. ECOS_API_KEY를 넣으면 전 구간을 받습니다."
+            f"시험키로 받았습니다 — 요청당 10건 제한이라 {months}개월치만 받았습니다. "
+            "ECOS_API_KEY를 넣으면 더 긴 구간을 받을 수 있습니다"
+            "(collect(months=…)로 창을 넓히십시오)."
         )
     return snap
 
@@ -133,9 +163,13 @@ def main() -> int:
         latest = s["latest"]
         if latest:
             print(f"  {s['name'][:34]:<36} {latest['time']}  {latest['value']}%")
-    if cap := snap["derived"].get("jeonse_conversion_cap"):
-        print(f"\n  ⭐ 전월세 전환율 법정 상한: {cap['value']}%")
-        print(f"     {cap['note']} · {cap['basis']}")
+    caps = {k: v for k, v in snap["derived"].items() if k.startswith("conversion_cap_")}
+    if caps:
+        print("\n  ⭐ 전월세 전환율 법정 상한 — ⚠ 주택과 상가는 식이 다르다")
+        for k, cap in caps.items():
+            print(f"     {k.split('_')[-1]}  {cap['value']:.2f}%  ({cap['binding']})")
+            print(f"        {cap['note']}")
+            print(f"        {cap['basis']}")
     for w in snap["warnings"]:
         print(f"  ⚠ {w}")
     print(f"\n→ {path}  (⚠ .gitignore — repo에 올리지 않는다)")

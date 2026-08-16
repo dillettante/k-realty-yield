@@ -194,9 +194,24 @@ def _load_reb(cache_dir: Path, m: Market, property_type: str = "") -> None:
     tables = snap.get("tables", {})
 
     def pick(name: str) -> dict | None:
+        """⚠⚠ 요청한 유형이 없으면 **아무것도 돌려주지 않는다.**
+
+        예전에는 없으면 아무 유형이나(사전 순 첫 항목) 집어 왔다. 그러면
+        오피스 공실률에 「중대형 상가」 딱지가 붙는다 — 조용히 틀리는 정도가
+        아니라 **적극적으로 오표기한다.** 「오피스≠오피스텔」과 같은 버그다.
+        """
         by = tables.get(name, {}).get("by_type", {})
-        block = by.get(prop_type) or (next(iter(by.values())) if by else None)
-        return _latest(block["rows"]) if block else None
+        if not by:
+            return None
+        block = by.get(prop_type)
+        if block is None:
+            m.warnings.append(
+                f"[{name}] 수집물에 '{prop_type}'이 없습니다(있는 유형: "
+                f"{', '.join(by) or '없음'}) — **다른 유형 값으로 대신하지 않습니다.** "
+                "직접 입력하십시오."
+            )
+            return None
+        return _latest(block["rows"])
 
     if hit := pick("vacancy"):
         m.vacancy_rate = MarketValue(

@@ -6,8 +6,13 @@ policy/schema.md의 세 규약을 테스트한다.
   3. L5·L6은 값을 싣지 않는다
 """
 
+import contextlib
 import datetime as dt
+import os
+import pathlib
+import re
 import sys
+import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -17,6 +22,19 @@ from engine.policy_loader import (  # noqa: E402
 )
 
 POLICY = Path(__file__).resolve().parent.parent / "policy"
+
+
+@contextlib.contextmanager
+def _temp_yaml(body: str):
+    """임시 yaml 하나를 만들고 **반드시 지운다**(테스트가 쓰레기를 남기지 않게)."""
+    with tempfile.NamedTemporaryFile(
+            "w", suffix=".yaml", encoding="utf-8", delete=False) as f:
+        f.write(body)
+        p = f.name
+    try:
+        yield p
+    finally:
+        os.unlink(p)
 
 
 def test_전건_로드되고_필수필드가_있다() -> None:
@@ -99,26 +117,73 @@ def test_L5_L6에_값을_실으면_거부한다() -> None:
                  checked_at=dt.date.today(), status="확인완료", value=0.1)
     except TypeError:
         raise AssertionError("dataclass 생성은 되어야 한다")
-    # 로더 차원의 거부는 load()에서 — 임시 파일로 확인
-    import tempfile
-    bad = """items:
+    # 로더 차원의 거부는 load()에서 — 임시 파일로 확인.
+    # ⚠ value뿐 아니라 regulation_value·effective_value도 막아야 한다(뒷문).
+    for field_name in ("value", "regulation_value", "effective_value"):
+        bad = f"""items:
   - id: X-1
     name: "실무 관행 값"
     layer: L6
     basis: "업계 관행"
     checked_at: 2026-08-15
+    expires_at: 2026-12-31
+    status: 확인완료
+    {field_name}: 0.02
+"""
+        with _temp_yaml(bad) as p:
+            try:
+                load(p)
+            except ValueError as e:
+                assert "L6" in str(e), f"{field_name}: 거부 사유가 층이 아니다 — {e}"
+            else:
+                raise AssertionError(f"L6에 {field_name}을 실었는데 거부되지 않았다")
+
+
+def test_expires_at이_없으면_거부한다() -> None:
+    """⚠⚠ 없으면 age_state()가 영원히 fresh를 준다 — 주장 전체가 무너지는 자리."""
+    bad = """items:
+  - id: X-2
+    name: "만료일 없는 값"
+    layer: L1
+    basis: "어떤 법 제1조"
+    checked_at: 2026-08-15
     status: 확인완료
     value: 0.02
 """
-    with tempfile.NamedTemporaryFile("w", suffix=".yaml", encoding="utf-8", delete=False) as f:
-        f.write(bad)
-        p = f.name
-    try:
-        load(p)
-    except ValueError as e:
-        assert "L6" in str(e)
-    else:
-        raise AssertionError("L6에 값을 실었는데 거부되지 않았다")
+    with _temp_yaml(bad) as p:
+        try:
+            load(p)
+        except ValueError as e:
+            assert "expires_at" in str(e)
+        else:
+            raise AssertionError("만료일이 없는데 로드됐다")
+
+    # 로더를 우회해 직접 만들어도 fresh로 통과하지 않는다
+    c = Constant(id="X-3", name="n", layer="L1", basis="b",
+                 checked_at=dt.date(2026, 1, 1), status="확인완료")
+    assert c.age_state(dt.date(2026, 1, 2)) == "expired", "만료일을 모르면 만료로 본다"
+
+
+def test_같은_id가_두_파일에_있으면_거부한다() -> None:
+    """파일이 갈려 있으면 중복이 생기고, 만료일이 따로 낡는다."""
+    body = """items:
+  - id: DUP-1
+    name: "같은 사실"
+    layer: L1
+    basis: "어떤 법 제1조"
+    checked_at: 2026-08-15
+    expires_at: 2026-12-31
+    status: 확인완료
+"""
+    with tempfile.TemporaryDirectory() as d:
+        for nm in ("a.yaml", "b.yaml"):
+            (pathlib.Path(d) / nm).write_text(body, encoding="utf-8")
+        try:
+            load_all(d)
+        except ValueError as e:
+            assert "DUP-1" in str(e)
+        else:
+            raise AssertionError("같은 id가 두 파일에 있는데 통과했다")
 
 
 def test_경고를_모아서_낼_수_있다() -> None:
@@ -126,6 +191,32 @@ def test_경고를_모아서_낼_수_있다() -> None:
     future = dt.date(2027, 12, 31)          # 전부 만료된 시점
     ws = collect_warnings(consts, future)
     assert len(ws) >= len([c for c in consts if c.expires_at])
+
+
+def test_문서에_적힌_건수가_실제와_맞는다() -> None:
+    """⚠⚠ 이 테스트가 막는 것 — **원장을 고치면 그것을 인용한 문서가 따로 낡는다.**
+
+    항목 하나를 더하면 README·schema.md·constants.yaml 머리글의 숫자가
+    동시에 틀린다. 사람이 네 곳을 같이 고치는 데 의존하지 않고 여기서 잡는다.
+    """
+    root = Path(__file__).resolve().parent.parent
+    total = len(load_all())
+    per_file = {f.name: len(load(f)) for f in sorted(POLICY.glob("*.yaml"))}
+
+    checks = [
+        (root / "README.md", r"\*\*(\d+)건, 층·확인일 포함\*\*", total, "README 제도 값"),
+        (POLICY / "schema.md", r"세제대장에서 옮긴 (\d+)건", per_file["constants.yaml"],
+         "schema.md constants 건수"),
+        (POLICY / "constants.yaml", r"부동산 관련 (\d+)건", per_file["constants.yaml"],
+         "constants.yaml 머리글"),
+    ]
+    for path, pattern, expect, label in checks:
+        m = re.search(pattern, path.read_text(encoding="utf-8"))
+        assert m, f"{label}: 건수 서술을 찾지 못했다 — 패턴이 낡았다({path.name})"
+        assert int(m.group(1)) == expect, (
+            f"{label}: 문서는 {m.group(1)}건이라는데 실제는 {expect}건이다 "
+            f"({path.name})"
+        )
 
 
 if __name__ == "__main__":

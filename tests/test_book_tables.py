@@ -15,7 +15,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from engine.leverage import rate_sensitivity, sign_flip_point, wipeout_drop  # noqa: E402
+from engine.leverage import (  # noqa: E402
+    asset_multiple, critical_recovery, equity_ratio, rate_sensitivity, roe,
+    sign_flip_point, weighted_funding_rate, wipeout_drop,
+)
 from engine.yield_basic import (  # noqa: E402
     MAN, Property, net_yield, net_yield_steps, roi_leveraged, surface_yield,
 )
@@ -118,13 +121,81 @@ def test_판정4_금리민감도() -> None:
     # 금리 3.5%p 상승에 ROE는 28%p 움직인다
     assert abs((rows[0].roe - rows[-1].roe) - 0.28) < TOL
 
-    # 부호 전환점 = ROA = 5.0%에서 ROE가 0
-    assert abs(sign_flip_point(0.04) - 0.04) < TOL
-    zero = [r for r in rows if abs(r.roe) < TOL][0]
+    # ⚠⚠ 두 지점은 다르고, 부호 전환이 **먼저** 온다(1.7 §판정 3).
+    #    그 사이 구간에서 투자자는 돈을 벌면서 레버리지 때문에 손해를 본다.
+    #
+    #    ⚠ 축이 둘이라 헷갈린다 — 이 표는 **대출금리** 축이고,
+    #      인자 없는 sign_flip_point()는 **가중 조달비용** 축이다.
+    #      무이자 보증금 1,000만이 섞여 있어 두 값이 0.5%p 어긋난다.
+    assert abs(sign_flip_point(0.04) - 0.04) < TOL                  # 가중 조달비용 축
+    flip = sign_flip_point(0.04, loan=loan, free_debt=deposit)      # 대출금리 축
+    assert abs(flip - 0.045) < TOL, f"부호 전환점 {flip:.4%} ≠ 4.5%"
+
+    at_flip = [r for r in rows if abs(r.rate - flip) < TOL][0]
+    assert abs(at_flip.roe - at_flip.roa) < TOL, "부호 전환점에서는 ROE = ROA다"
+
+    zero = [r for r in rows if abs(r.roe) < TOL][0]                 # 손익분기
     assert abs(zero.rate - 0.050) < TOL
+    assert flip < zero.rate, "부호 전환이 손익분기보다 먼저 와야 한다"
 
     # 자기자본 소진 하락률 = 자기자본 비율 = 10%
     assert abs(wipeout_drop(asset, equity) - 0.10) < TOL
+    assert abs(equity_ratio(asset, equity) - 0.10) < TOL
+    assert abs(asset_multiple(asset, equity) - 10.0) < TOL
+    # 임계 회수율 = 1/(L−1) = 1/9
+    assert abs(critical_recovery(10.0) - 1 / 9) < TOL
+
+
+def test_레버리지_항등식이_민감도표와_같은_값을_낸다() -> None:
+    """⚠⚠ `roe()`에 **대출금리를 그대로 넣으면 틀린다.**
+
+    무이자 보증금이 섞이면 조달비용은 가중평균이라 표면 금리보다 낮다.
+    책 §판정 4에서 대출금리 3.5%를 그대로 넣으면 8.5%, 가중평균 3.111%를
+    넣으면 12.0%다 — 3.5%p 어긋난다. 이 테스트가 그 함정을 지킨다.
+    """
+    asset, loan, deposit = 100_000_000, 80_000_000, 10_000_000
+    equity = asset - loan - deposit
+    L = asset_multiple(asset, equity)
+
+    rw = weighted_funding_rate([(loan, 0.035), (deposit, 0.0)])
+    assert abs(rw - 0.035 * loan / (loan + deposit)) < TOL
+    assert abs(rw - 0.031111) < 1e-5, f"가중 조달비용 {rw:.4%}"
+
+    assert abs(roe(0.04, L, rw) - 0.12) < TOL              # ✅ 책의 12.0%
+    assert abs(roe(0.04, L, 0.035) - 0.085) < TOL          # ❌ 대출금리를 그대로 넣으면
+
+    # 항등식과 민감도표가 모든 행에서 일치해야 한다
+    for row in rate_sensitivity(asset=asset, equity=equity, roa=0.04,
+                                rates=[0.035, 0.045, 0.050, 0.060], loan=loan):
+        rw_row = weighted_funding_rate([(loan, row.rate), (deposit, 0.0)])
+        assert abs(roe(0.04, L, rw_row) - row.roe) < TOL, f"금리 {row.rate:.1%}"
+
+
+def test_전월세_전환율_상한은_두_상한_중_낮은_쪽이다() -> None:
+    """⚠⚠ 조문은 「다음 각 호 중 **낮은 비율**」이다 — 상한이 둘이다.
+
+    기준금리만 더하면 금리가 높을 때 법정 상한을 넘긴 값을 낸다.
+    그리고 **주택과 상가는 식 자체가 다르다** — 더하기 vs 곱하기.
+    """
+    from data.collect_ecos import conversion_rate_cap as cap
+
+    # 주택: min(10%, 기준금리 + 2%p) — 주임법 §7-2 · 시행령 §9
+    assert abs(cap(2.75, "주택") - 4.75) < 0.001        # 연동분이 낮다
+    assert abs(cap(9.00, "주택") - 10.00) < 0.001       # ⭐ 상한이 이긴다
+
+    # 상가: min(12%, 기준금리 × 4.5배) — 상임법 §12 · 시행령 §5
+    assert abs(cap(2.00, "상가") - 9.00) < 0.001        # 연동분이 낮다
+    assert abs(cap(2.75, "상가") - 12.00) < 0.001       # ⭐ 상한이 이긴다
+
+    # 현 기준금리에서 둘의 간격 — 하나만 쓰면 상가에서 7.25%p 틀린다
+    assert abs(cap(2.75, "상가") - cap(2.75, "주택") - 7.25) < 0.001
+
+    try:
+        cap(2.75, "오피스텔")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("모르는 유형은 조용히 주택으로 계산하면 안 된다")
 
 
 def test_ROI_이고은_원문재현() -> None:
