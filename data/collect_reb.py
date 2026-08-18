@@ -27,8 +27,11 @@
     시책 대상일 뿐). 그래서 이 repo는 **수집물을 배포하지 않는다.**
     이용자가 자기 키로 받고, 이용조건은 기관 것을 따른다. DISCLAIMER.md §5.
 
-    REB_API_KEY=xxx python3 data/collect_reb.py
-    REB_API_KEY=xxx python3 data/collect_reb.py --list 임대동향
+    python3 data/collect_reb.py
+    python3 data/collect_reb.py --list 임대동향
+
+키는 레포 루트 `.env`에 `REB_API_KEY=...` 한 줄로 둔다(API_KEYS.md §5).
+⚠ 명령줄에 적으면 셸 기록에 남는다.
 
 의존 없음(stdlib only).
 """
@@ -41,6 +44,11 @@ import sys
 import urllib.parse
 import urllib.request
 from pathlib import Path
+
+# ⚠ 스크립트로 돌릴 때는 data/가 자동으로 경로에 들어가지만,
+#   테스트가 모듈로 불러올 때는 안 들어간다 — 그래서 직접 넣는다.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import _env  # noqa: E402
 
 BASE = "https://www.reb.or.kr/r-one/openapi"
 OUT_DIR = Path(__file__).resolve().parent.parent / "cache"
@@ -79,10 +87,12 @@ TARGETS = {
 }
 
 def _key() -> str:
+    _env.load()                                   # .env가 있으면 올린다(셸 값이 우선)
     k = os.environ.get("REB_API_KEY", "").strip()
     if not k:
         raise SystemExit(
             "REB_API_KEY가 없습니다.\n"
+            "  → 레포 루트에 .env를 두고 REB_API_KEY=... 한 줄이면 됩니다.\n"
             "  ⚠ R-ONE은 ECOS와 달리 시험키가 없습니다 — 키가 반드시 필요합니다.\n"
             "  발급(무료): https://www.reb.or.kr/r-one\n"
             "  키 없이도 계산 엔진은 돕니다. 공실률·순영업소득만 직접 입력하세요."

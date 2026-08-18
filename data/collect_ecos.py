@@ -10,7 +10,9 @@ bring-your-own-data: **수집물은 repo에 들어가지 않는다**(.gitignore)
 키를 넣으면 제한이 풀린다. 발급: https://ecos.bok.or.kr (무료)
 
     python3 data/collect_ecos.py                 # 시험키, 최근 10개월
-    ECOS_API_KEY=xxx python3 data/collect_ecos.py
+
+키는 레포 루트 `.env`에 `ECOS_API_KEY=...` 한 줄로 둔다(API_KEYS.md §5).
+⚠ 명령줄에 적으면 셸 기록에 남는다.
 
 의존 없음(stdlib only).
 """
@@ -23,6 +25,11 @@ import os
 import sys
 import urllib.request
 from pathlib import Path
+
+# ⚠ 스크립트로 돌릴 때는 data/가 자동으로 경로에 들어가지만,
+#   테스트가 모듈로 불러올 때는 안 들어간다 — 그래서 직접 넣는다.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import _env  # noqa: E402
 
 BASE = "https://ecos.bok.or.kr/api/StatisticSearch"
 OUT_DIR = Path(__file__).resolve().parent.parent / "cache"
@@ -50,6 +57,7 @@ SAMPLE_LIMIT = 10  # 시험키 상한
 
 
 def _key() -> tuple[str, int]:
+    _env.load()                                   # .env가 있으면 올린다(셸 값이 우선)
     k = os.environ.get("ECOS_API_KEY", "").strip()
     return (k, 200) if k else ("sample", SAMPLE_LIMIT)
 

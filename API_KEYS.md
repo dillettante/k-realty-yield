@@ -102,15 +102,33 @@ REB_API_KEY=키 python3 data/collect_reb.py                  # 수집
 
 ## 5. 키를 넣는 법
 
-**셸에 환경변수로 넣는다. 코드나 repo에 적지 않는다.**
+**레포 루트의 `.env`에 적는다.** 수집기가 실행할 때 읽어 올린다(`data/_env.py`, 의존 없음).
 
 ```bash
-# ~/.zshrc 에 추가
-export ECOS_API_KEY="..."
-export REB_API_KEY="..."
+cd k-realty-yield
+cat > .env <<'EOF'
+ECOS_API_KEY=...
+REB_API_KEY=...
+MOLIT_API_KEY_ENC=...
+EOF
+chmod 600 .env
 ```
 
-⚠ **키를 `policy/`나 `cache/`에 적지 말 것.** `.gitignore`가 `cache/`를 막지만 키는 애초에 파일에 두지 않는 편이 안전하다.
+**왜 파일인가.** 명령줄에 적으면(`ECOS_API_KEY=xxx python3 ...`) **셸 기록에 남고**, 소스에 적으면 **커밋된다.** `.env`는 `.gitignore`에 걸려 있고 권한이 600이라 둘 다 피한다.
+
+⚠ **셸 환경변수가 `.env`보다 세다** — 이미 `export`한 값이 있으면 파일이 덮지 않는다. 다른 키로 잠깐 시험할 때 쓴다.
+
+⚠ **`MOLIT_API_KEY_ENC`는 URL 인코딩된 쪽**이다(국토교통부는 인코딩/디코딩 두 벌을 준다). `%2F`·`%3D`가 들어 있으면 인코딩된 것이다.
+
+⚠ **키를 `policy/`나 `cache/`에는 적지 말 것.** `.gitignore`가 막는 경로라도 용도가 다르다.
+
+⚠⚠ **`.gitignore`를 먼저 확인하고 커밋한다.**
+
+```bash
+git check-ignore -v .env && git ls-files | grep -i env
+```
+
+첫 명령이 `.gitignore:18:.env` 같은 줄을 내고 둘째가 **아무것도 안 내면** 안전하다.
 
 ---
 
