@@ -62,10 +62,10 @@ def test_판정2_단계분해() -> None:
 
     # 낙차 — ⚠ 손계산 결과 ④는 0.23%p가 아니라 0.22%p다.
     # 근거: 3.9687% − 3.7454% = 0.2232%p. 0.23으로 적으면
-    # 합이 2.25%p가 되어 본문의 「2.24%p가 사라지고」와 어긋났다.
+    # 손계산한 낙차 합이 2.25%p로, 단계별 낙차를 눈으로 더한 2.24%p와 어긋났다.
     drops = [round(s.drop * 100, 2) for s in steps[1:]]
     assert drops == [0.30, 0.39, 0.34, 0.22, 0.99], drops
-    assert abs(sum(s.drop for s in steps[1:]) - 0.0224) < TOL   # 본문과 일치
+    assert abs(sum(s.drop for s in steps[1:]) - 0.0224) < TOL   # 손계산값과 일치
 
     # 「55%만 남는다」
     assert abs(steps[-1].rate / steps[0].rate - 0.55) < 0.01
